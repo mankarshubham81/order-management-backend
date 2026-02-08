@@ -1,6 +1,14 @@
 const { createOrderSchema } = require("../validators/order.validator");
 const { createOrder, getOrderById } = require("../services/order.service");
 
+const { createOrderSchema } = require("../validators/order.validator");
+const {
+  createOrder,
+  getOrderById,
+  updateOrderStatus,
+  ORDER_STATUSES
+} = require("../services/order.service");
+
 const createOrderHandler = (req, res) => {
   const { error, value } = createOrderSchema.validate(req.body);
 
@@ -12,17 +20,21 @@ const createOrderHandler = (req, res) => {
   }
 
   const order = createOrder(value);
+
+  // 🔁 Simulate status updates
+  const interval = setInterval(() => {
+    updateOrderStatus(order.id);
+
+    const updatedOrder = getOrderById(order.id);
+    if (
+      updatedOrder &&
+      updatedOrder.status === ORDER_STATUSES[ORDER_STATUSES.length - 1]
+    ) {
+      clearInterval(interval);
+    }
+  }, 10000); // every 10 seconds
+
   res.status(201).json(order);
-};
-
-const getOrderHandler = (req, res) => {
-  const order = getOrderById(req.params.id);
-
-  if (!order) {
-    return res.status(404).json({ message: "Order not found" });
-  }
-
-  res.json(order);
 };
 
 module.exports = {
